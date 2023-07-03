@@ -1,0 +1,99 @@
+Χρησιμοποιώντας την εντολή use flights; για να αναφερθούμε στο flights.sql αρχείο.
+
+#1
+select distinct airplanes.id
+from airplanes,airlines_has_airplanes,airlines
+where airplanes.id=airlines_has_airplanes.airplanes_id and airlines_has_airplanes.airlines_id=airlines.id and airlines.name='Lufthansa' and airplanes.manufacturer='Airbus' ;
+
+#2
+
+select distinct airl.name
+from airlines airl,routes r1,airports airp1,airports airp2
+where airl.id=r1.airlines_id and r1.source_id=airp1.id and airp1.city='Athens' and r1.destination_id=airp2.id and airp2.city='Prague';
+
+
+
+#3
+select distinct Count(passengers.id)
+from passengers , routes , airlines , flights_has_passengers , flights
+where passengers.id=flights_has_passengers.passengers_id and flights_has_passengers.flights_id=flights.id and flights.routes_id=routes.id and routes.airlines_id=airlines.id and airlines.name='Aegean Airlines' and flights.date='2012-02-19';
+
+#4
+select distinct "yes" as answer
+where exists (select f1.id from routes r1,airports airp1,airports airp2 , flights f1 , airlines 
+where f1.routes_id=r1.id and r1.airlines_id=airlines.id and airlines.name='Olympic Airways' and r1.source_id=airp1.id and airp1.name='Athens El. Venizelos' and r1.destination_id=airp2.id and airp2.name='London Gatwick' and f1.date='2014-12-12')
+
+union 
+
+select distinct "no" as answer
+where not exists(
+select f1.id
+from  flights f1 , airlines ,routes r1,airports airp1,airports airp2
+where f1.routes_id=r1.id and r1.airlines_id=airlines.id and airlines.name='Olympic Airways' and r1.source_id=airp1.id and airp1.name='Athens El. Venizelos'   and r1.destination_id=airp2.id and airp2.name='London Gatwick' and f1.date='2014-12-12'
+);
+
+#5
+select distinct avg(2022-passengers.year_of_birth)
+from  passengers,flights,routes,airports,flights_has_passengers
+where  passengers.id=flights_has_passengers.passengers_id and flights_has_passengers.flights_id=flights.id and flights.routes_id=routes.id and routes.destination_id=airports.id and airports.city='Berlin';
+
+#6
+select distinct pas1.name,pas1.surname
+from  passengers pas1,flights_has_passengers flightshas1 ,flights flights1,airplanes airp1
+where pas1.id=flightshas1.passengers_id and flightshas1.flights_id=flights1.id and flights1.airplanes_id=airp1.id 
+group by (pas1.id)
+having  count(distinct  airp1.id)=1;
+
+#7
+
+select distinct air1.name,air2.name
+from airports air1,airports air2,flights,routes r1,flights_has_passengers
+where flights.routes_id=r1.id and r1.source_id=air1.id and r1.destination_id=air2.id and flights.date>'2010-03-01' and flights.date<'2014-07-17' and flights.id=flights_has_passengers.flights_id and flights_has_passengers.passengers_id
+group by (flights.id) 
+having count(flights_has_passengers.passengers_id)>5
+;
+
+
+#8
+select  distinct airlines.name, airlines.id , count(routes.id)
+from airlines,airlines_has_airplanes,routes
+where routes.airlines_id=airlines.id and airlines.id=airlines_has_airplanes.airlines_id 
+group by(airlines.id)
+having count( distinct airlines_has_airplanes.airplanes_id)=4 ;
+
+
+#9
+select distinct p.name,p.surname
+from passengers p
+where not exists (
+select distinct *
+from airlines air1
+where air1.active='Y' and not exists(
+select distinct  *
+from flights_has_passengers fh1,flights f1,routes r1
+where p.id=fh1.passengers_id and fh1.flights_id=f1.id and f1.routes_id=r1.id and r1.airlines_id=air1.id 
+)
+);
+
+
+#10
+select distinct p.name,p.surname
+from passengers p,flights_has_passengers fh1
+where p.id=fh1.passengers_id and not exists(
+select distinct air1.id
+from airlines air1
+where air1.name!='Aegean Airlines' and exists(
+select distinct *
+from   flights f1,routes r1,flights_has_passengers fh2
+where  p.id=fh2.passengers_id and fh2.flights_id=f1.id and f1.routes_id=r1.id and r1.airlines_id=air1.id
+)
+)
+
+union 
+
+select  distinct passengers.name, passengers.surname
+from passengers,flights_has_passengers,flights
+where passengers.id=flights_has_passengers.passengers_id and flights_has_passengers.flights_id=flights.id and flights.date>'2011-01-02' and flights.date<'2013-12-31' 
+group by(passengers.id)
+having count(flights.id)>1 ;
+
